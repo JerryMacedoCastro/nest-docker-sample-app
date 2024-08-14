@@ -48,5 +48,14 @@ EXPOSE 3000
 
 CMD ["npm", "run", "start:prod" ]
 
+FROM gcr.io/distroless/nodejs20-debian12:nonroot
+
+COPY --from=production --chown=nonroot:nonroot /home/node/app/dist /app/dist 
+COPY --from=production --chown=nonroot:nonroot /home/node/app/node_modules /app/node_modules 
+
+WORKDIR /app
+
+CMD ["dist/main.js"]
+
 
 
