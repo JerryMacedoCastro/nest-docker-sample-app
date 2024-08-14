@@ -1,0 +1,52 @@
+FROM node:20-slim as builder
+
+RUN apt update -y && \
+    apt install --no-install-recommends -y \
+    openssl && \
+    rm -rf /var/lib/apt/lists/*
+
+USER node
+
+RUN mkdir -p /home/node/app
+
+WORKDIR /home/node/app
+
+COPY  --chown=node:node package*.json ./
+
+RUN npm ci
+
+COPY  --chown=node:node . . 
+
+RUN npm run build
+
+FROM node:20-slim as production
+
+LABEL maintainer="Jerry Castro"
+LABEL email="jerry.castro96@outlook.com"
+LABEL version="1.0.0"
+
+ENV NODE_ENV production
+
+RUN apt update -y && \
+    apt install --no-install-recommends -y \
+    openssl && \
+    rm -rf /var/lib/apt/lists/*
+
+USER node
+
+RUN mkdir -p /home/node/app
+
+WORKDIR /home/node/app
+
+COPY  --chown=node:node package*.json ./
+
+RUN npm ci --only=production && npm cache clean --force
+
+COPY --from=builder --chown=ndoe:node /home/node/app/dist ./dist
+
+EXPOSE 3000
+
+CMD ["npm", "run", "start:prod" ]
+
+
+
